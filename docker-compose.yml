@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: training_project_postgres
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:latest
+    container_name: training_project_redis
+    ports:
+      - "6379:6379"
+
+  django:
+    container_name: training_project_django
+    build:
+      context: ./training_project
+    volumes:
+      - ./training_project:/usr/src/app/
+    ports:
+      - "8001:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=vanhnek
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DB_NAME=mydatabase
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: python manage.py runserver 0.0.0.0:8000
+
+  celery:
+    container_name: training_project_celery
+    build:
+      context: ./training_project
+    command: celery -A managing_workload worker --loglevel=info
+    volumes:
+      - ./training_project:/usr/src/app/
+    environment:
+      - DB_NAME=mydatabase
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - django
+      - redis
+
+  celery-beat:
+    container_name: training_project_celery_beat
+    build:
+      context: ./training_project
+    command: celery -A managing_workload beat --loglevel=info
+    volumes:
+      - ./training_project:/usr/src/app/
+    environment:
+      - DB_NAME=mydatabase
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+        - django
+        - redis
+
+volumes:
+  postgres_data:
