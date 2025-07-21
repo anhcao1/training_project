@@ -1,25 +1,45 @@
 # tasks/permissions.py
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
+ADMIN_GROUPS = ('Admin', 'Manager')
+
+
+def is_admin_or_manager(user):
+
+    return (
+        user and
+        user.is_authenticated and
+        user.groups.filter(name__in=ADMIN_GROUPS).exists()
+    )
+
 
 class IsAdminOrManager(BasePermission):
-    def has_permission(self, request, view):
-        return request.user.groups.filter(name__in=['Admin', 'Manager']).exists()
 
-
-class IsStaff(BasePermission):
     def has_permission(self, request, view):
-        return request.user.groups.filter(name='Staff').exists()
+        return is_admin_or_manager(request.user)
+
 
 class IsManagerOrAdminOrOwner(BasePermission):
     def has_permission(self, request, view):
-        if request.method == 'POST':
-            task_data = request.data.get('task', {})
-            assignee_id = task_data.get('assignee', '')
-            return assignee_id == request.user.id 
-        return True 
-    def has_object_permission(self, request, view, obj):
-        print("aaaa", obj.assignee, request.user)
-        if request.user.groups.filter(name__in=['Admin', 'Manager']).exists():
+        user = request.user
+        if is_admin_or_manager(user):
+            print("")
             return True
-        print(obj.assignee, request.user)
-        return obj.assignee == request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        if request.method == 'POST':
+            data = request.data or {}
+            return (
+                data.get('assignee') == user.id or
+                data.get('owner') == user.id
+            )
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        if is_admin_or_manager(user):
+            return True
+        return (
+            getattr(obj, 'assignee_id', None) == user.id or
+            getattr(obj, 'owner_id', None) == user.id
+        )

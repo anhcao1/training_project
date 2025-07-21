@@ -4,6 +4,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import Task
 from django.utils.timezone import now
+
+
 @shared_task
 def send_email_task(subject, message, recipient_list):
     """
@@ -17,16 +19,20 @@ def send_email_task(subject, message, recipient_list):
         recipient_list,
         fail_silently=False,
     )
+
+
 @shared_task
 def send_duedate_task():
     print("Checking for tasks due soon...")
-    tasks = Task.objects.filter(due_date__lte= now() + timedelta(days=1), status='Pending')
+    tasks = Task.objects.filter(
+        due_date__lte=now() + timedelta(days=1), status='Pending')
     for task in tasks:
         send_email_task.delay(
             subject=f"Task Due Soon: {task.title}",
             message=f"Task '{task.title}' is due soon.",
             recipient_list=[task.assignee.email]
         )
+
 
 @shared_task
 def sample_task():
