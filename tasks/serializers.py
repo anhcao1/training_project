@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Task
-from django.contrib.auth.models import User
 
 
 class TaskStatsSerializer(serializers.Serializer):
@@ -20,5 +19,4 @@ class TaskModelSerializer(serializers.ModelSerializer):
             'status': {'required': False, 'default': 'pending'},
             'priority': {'required': False, 'default': 'medium'},
             'due_date': {'required': False, 'allow_null': True},
-            'completed': {'required': False, 'default': False}
         }

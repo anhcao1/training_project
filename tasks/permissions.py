@@ -1,10 +1,10 @@
-# tasks/permissions.py
-from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
+from rest_framework.permissions import BasePermission
+
+
 ADMIN_GROUPS = ('Admin', 'Manager')
 
 
 def is_admin_or_manager(user):
-
     return (
         user and
         user.is_authenticated and

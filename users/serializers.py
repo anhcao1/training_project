@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.models import Group
 
 
@@ -26,12 +25,16 @@ class UserSerializer(serializers.Serializer):
             raise serializers.ValidationError("Username already exists")
         return value
     
-# ModelSerializer
+
 class UserModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}, 'id': {'read_only': True}, 'email': {'required': False}}
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'id': {'read_only': True},
+            'email': {'required': False},
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(

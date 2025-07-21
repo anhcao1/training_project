@@ -26,9 +26,9 @@ services:
   django:
     container_name: training_project_django
     build:
-      context: ./training_project
+      context: .
     volumes:
-      - ./training_project:/usr/src/app/
+      - .:/usr/src/app/
     ports:
       - "8001:8000"
     environment:
@@ -50,10 +50,10 @@ services:
   celery:
     container_name: training_project_celery
     build:
-      context: ./training_project
+      context: .
     command: celery -A managing_workload worker --loglevel=info
     volumes:
-      - ./training_project:/usr/src/app/
+      - .:/usr/src/app/
     environment:
       - DB_NAME=mydatabase
       - DB_USER=myuser
@@ -69,10 +69,10 @@ services:
   celery-beat:
     container_name: training_project_celery_beat
     build:
-      context: ./training_project
+      context: .
     command: celery -A managing_workload beat --loglevel=info
     volumes:
-      - ./training_project:/usr/src/app/
+      - .:/usr/src/app/
     environment:
       - DB_NAME=mydatabase
       - DB_USER=myuser

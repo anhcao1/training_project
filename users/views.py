@@ -18,14 +18,22 @@ class UserLoginView(APIView):
         user = authenticate(username=user.get('username'),
                             password=user.get('password'))
         if not user:
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "Invalid credentials"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         if serializer.is_valid():
             response_data = UserSerializer(user).data
-            response_data['refresh'], response_data['access'] = get_tokens_for_user(
-                user).values()
+            (
+                response_data['refresh'],
+                response_data['access']
+            ) = get_tokens_for_user(user).values()
             return Response({"user": response_data}, status=status.HTTP_200_OK)
         else:
-            return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserRegisterView(APIView):
@@ -36,12 +44,15 @@ class UserRegisterView(APIView):
         if serializer.is_valid():
             serializer.save()
             response_data = serializer.data
-            return Response({"user": response_data}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"user": response_data},
+                status=status.HTTP_201_CREATED
+            )
         else:
-            return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Using ModelSerializer for User
+            return Response(
+                {"errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserProfileView(generics.RetrieveAPIView):
